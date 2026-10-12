@@ -107,18 +107,42 @@ UnlimitedGameTime()
 
 BO4Level55(player)
 {
-    player AddRankXPValue("win", 25160000);
-    player stats::set_stat(#"playerstatslist",#"rankxp","statvalue",int(25160000));
-    if(self.pers[#"rank"] != 54) self.pers[ #"rank" ] = 54;
-    self stats::set_stat_global(#"rank",int(54));
-    self stats::set_stat_global(#"maxxp",int(1));
-    self stats::set_stat_global(#"minxp",int(0));
-    self stats::set_stat_global(#"lastxp",1);
-    player rank::updaterank();
-    wait .1;
-    UploadStats(player);
+    oldrank = player.pers[ #"rank" ];
+    rankid = player.pers[ #"rank" ];
+    newrankid = 54;
+    player.pers[ #"rank" ] = newrankid;
+    while ( rankid <= newrankid )
+    {
+        player stats::set_stat_global( #"rank", rankid, 1 );
+        player stats::set_stat_global( #"minxp", int( player rank::getrankinfominxp( rankid ) ), 1 );
+        player stats::set_stat_global( #"rankxp", int( player rank::getrankinfomaxxp( rankid ) - 1 ), 1 );
+        player stats::set_stat_global( #"maxxp", int( player rank::getrankinfomaxxp( rankid ) ), 1 );
+        rankid++;
+    }
+    player.rankupdatetotal = rankid;
+    player.cur_ranknum = newrankid;
+    self.pers[ #"summary" ][ #"xp" ] += 25160000;
+    uploadstats(player);
     player iPrintLnBold("XP Set to Max");
 }
+
+CompleteActiveContracts(player)
+{
+    if(isDefined(player.pers[#"contracts"]))
+    {
+        for(slot=0;slot<3;slot++)
+        {
+            contract = player stats::function_ff8f4f17( #"loot_contracts", slot, #"contracthash" );
+            if(isDefined(contract)){
+                targetVal = player stats::function_ff8f4f17( #"loot_contracts", slot, #"target" );
+                player stats::set_stat(#"loot_contracts", slot, #"progress", targetVal);
+                wait .1;
+            }
+        }
+    }
+    self iPrintLnBold("All Contracts Completed");
+}
+
 MP_UnlockAll(player)
 {
     if(isDefined(player.UnlockAll))
@@ -211,17 +235,19 @@ MP_UnlockAll(player)
                         //these are questionable, pulled from StatMilestones3.csv. Should be weapon Camos, untested.
                         player iPrintLnBold("Name: "+stat.name+", Value: "+stat.value+", Type: Weapon");
                         player addweaponstat(weap, stat.name, 5000);
-                        player addrankxp(#"kill",weap,undefined,undefined,1,5000);
+                        player stats::function_e24eec31(weap,stat.name,stat.value);
                         player addweaponstat(weap, #"kills", 5000);
-                        player addweaponstat(weap, #"headshots", 5000);
-                        player addweaponstat(weap, #"longshot_kill", 5000);
-                        player addweaponstat(weap, #"hash_72add9adadcd524b", 2500);
-                        player addweaponstat(weap, #"hash_48fa9e0371c0697a", 2500);
-                        player addweaponstat(weap, #"multikill_2", 2500);
-                        player addweaponstat(weap, #"killstreak_5", 2500);
-                        player addweaponstat(weap, #"revenge_kill", 2500);
-                        player addweaponstat(weap, #"backstabber_kill", 2500);
-                        player addweaponstat(weap, #"hash_6d1ab256c84ca772", 2500);
+                        player addweaponstat(weap, #"headshots", 5000);//india camo
+                        player addweaponstat(weap, #"longshot_kill", 5000);//juliett camo
+                        player addweaponstat(weap, #"hash_72add9adadcd524b", 5000);//kilo camo
+                        player addweaponstat(weap, #"hash_48fa9e0371c0697a", 5000);//kills loaded
+                        player addweaponstat(weap, #"multikill_2", 5000);//mike camo
+                        player addweaponstat(weap, #"killstreak_5", 5000);//november camo
+                        player addweaponstat(weap, #"revenge_kill", 5000);//knife revenge
+                        player addweaponstat(weap, #"backstabber_kill", 5000);//knife backstabber
+                        player addweaponstat(weap, #"hash_43fcbe340404e167", 5000);//knife kill when injured
+                        player addweaponstat(weap, #"hash_5d2e5d136376f573",5000);//knife kills with enemy weap
+                        player addweaponstat(weap, #"hash_6d1ab256c84ca772", 5000);
                         wait .1;
                     }
                     break;
@@ -238,6 +264,64 @@ bo4_AddBotsToGame()
     AddTestClient();
 }
 
+AddEnemyBot()
+{
+    BotNames = array(
+        "xXGhostXx","V1p3r","R0gu3","Reap3r_99","Sh4d0w",
+        "H4v0c","Str1k3r","Bulle7","Fr0stBite","V3n0mX",
+        "B1aze","Rapt0r_77","Hunt3rX","C0brA","Ph03n1x",
+        "DrakeXx","F4lc0n","St0rm99","Tit4n_21","Mav3rickX",
+        "Band1t_OG","Kn0x","N0vaX","Ra1der77","EchoX",
+        "SkullCr4sh","NightH4wk","ZeroCool","Bl4ck0ut","Sn1perWolf",
+        "IronCl4d","GhostUnit","R3dF0x","Cry0tic","VoidRunn3r",
+        "D34dSh0t","StormBr1ng3r","H3llR4z0r","ShadowSix","OmegaX",
+        "Vortex99","SilentF4ng","DarkR1der","NoMercyX","KillSw1tch",
+        "BlitzKr13g","GrimShot","IceV3in","RuinX","Spectr4",
+        "Deadlock","Phantomz","R3apX","BlackFang","ZeroSignal",
+        "SavageOne","NovaPulse","Skirmish","R0cketMan","HavocUnit",
+        "RazorEdge","KillZone","Crossh4ir","Ghosted","WarpDrive",
+        "T0xicRain","FrostByteX","ArcWarden","Shad0wByte","TitanRage",
+        "V1rtu0so","Cr1msonFox","DuskReaper","Gh0stM4sk","NeonR1ot",
+        "S1lentStorm","W1d0wM4ker","AshenWolf","M1dn1ghtOps","R3dC0m3t",
+        "NullVector","CipherX","R4venClaw","HyperNova","PulseR1der",
+        "SkullV0lt","Gr1mF4ng","N1ghtShift","M0d3rnW4r","D3lt4Viper",
+        "ClutchK1ng","QuickSc0pe","Sh0ckWav3","B1ackoutKid","F0xH0und",
+        "Z3r0Mercy","SpectralX","VantaRay","R1otM0de","LethalEcho"
+    );
+    name = BotNames[randomint(BotNames.size)];
+    enemyTeam = teams::getenemyteam(self.pers[#"team"]);
+    bot::add_bot(enemyTeam, name);
+    self iPrintLnBold("Spawned Enemy Bot");
+}
+AddFriendlyBot()
+{
+    BotNames = array(
+        "xXGhostXx","V1p3r","R0gu3","Reap3r_99","Sh4d0w",
+        "H4v0c","Str1k3r","Bulle7","Fr0stBite","V3n0mX",
+        "B1aze","Rapt0r_77","Hunt3rX","C0brA","Ph03n1x",
+        "DrakeXx","F4lc0n","St0rm99","Tit4n_21","Mav3rickX",
+        "Band1t_OG","Kn0x","N0vaX","Ra1der77","EchoX",
+        "SkullCr4sh","NightH4wk","ZeroCool","Bl4ck0ut","Sn1perWolf",
+        "IronCl4d","GhostUnit","R3dF0x","Cry0tic","VoidRunn3r",
+        "D34dSh0t","StormBr1ng3r","H3llR4z0r","ShadowSix","OmegaX",
+        "Vortex99","SilentF4ng","DarkR1der","NoMercyX","KillSw1tch",
+        "BlitzKr13g","GrimShot","IceV3in","RuinX","Spectr4",
+        "Deadlock","Phantomz","R3apX","BlackFang","ZeroSignal",
+        "SavageOne","NovaPulse","Skirmish","R0cketMan","HavocUnit",
+        "RazorEdge","KillZone","Crossh4ir","Ghosted","WarpDrive",
+        "T0xicRain","FrostByteX","ArcWarden","Shad0wByte","TitanRage",
+        "V1rtu0so","Cr1msonFox","DuskReaper","Gh0stM4sk","NeonR1ot",
+        "S1lentStorm","W1d0wM4ker","AshenWolf","M1dn1ghtOps","R3dC0m3t",
+        "NullVector","CipherX","R4venClaw","HyperNova","PulseR1der",
+        "SkullV0lt","Gr1mF4ng","N1ghtShift","M0d3rnW4r","D3lt4Viper",
+        "ClutchK1ng","QuickSc0pe","Sh0ckWav3","B1ackoutKid","F0xH0und",
+        "Z3r0Mercy","SpectralX","VantaRay","R1otM0de","LethalEcho"
+    );
+    name = BotNames[randomint(BotNames.size)];
+    Team = self.pers[#"team"];
+    bot::add_bot(Team,name);
+    self iPrintLnBold("Spawned Teammate Bot");
+}
 EndTheGame()
 {
     level thread globallogic::forceend();
@@ -290,4 +374,14 @@ unfair_aimbot()
         }
 
     }
+}
+
+ChangeBotDiff(which){
+    switch(which)
+    {
+        case 0:level.var_df0a0911 = "bot_tacstate_mp_easy";break;
+        case 1:level.var_df0a0911 = "bot_tacstate_mp_normal"; break;
+        case 2: level.var_df0a0911 = "bot_tacstate_mp_hard";break;
+        case 3: level.var_df0a0911 = "bot_tacstate_mp_veteran";break;
+    }self iprintlnbold(which);
 }

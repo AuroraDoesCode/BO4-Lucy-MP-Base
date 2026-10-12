@@ -10,7 +10,9 @@
 #include scripts\core_common\array_shared;
 #include scripts\core_common\flag_shared;
 #include scripts\core_common\aat_shared.gsc;
+#include scripts\core_common\bots\bot.gsc;
 #include scripts\mp_common\util.gsc;
+#include scripts\mp_common\teams\teams.gsc;
 #include scripts\core_common\rank_shared.gsc;
 #include scripts\core_common\exploder_shared.gsc;
 #include scripts\core_common\challenges_shared.gsc;
@@ -28,9 +30,7 @@
 autoexec __init__sytem__()
 {
 	system::register("clientids_shared", &__init__, undefined, undefined);
-    level.rankedmatch=true;
-    level.onlinegame=true;
-    level.nopersistence=false;
+    level.xpscale = 999;
 }
 
 __init__()

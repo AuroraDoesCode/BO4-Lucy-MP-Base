@@ -43,10 +43,13 @@ runMenuIndex(menu)
             self addMenu(menu, "Account Menu");
                 self addOpt("Unlock All", &MP_UnlockAll, self);
                 self addOpt("Max Level", &BO4Level55, self);
+                self addOpt("Complete Contracts", &CompleteActiveContracts, self);
         break;
         case "Game Settings Menu":
             self addMenu(menu, "Game Settings");
-                self addOpt("Add Bot", &bo4_AddBotsToGame);
+                self addOpt("Add Friendly Bot", &AddFriendlyBot);
+                self addOpt("Add Enemy Bot", &AddEnemyBot);
+                self addOptSlider("Change Bot Difficulty", &ChangeBotDiff, "Easy;Normal;Hard;Veteran");
                 self addOpt("Unlimited Game Timer", &UnlimitedGameTime);
         break;
         case "Host Menu":

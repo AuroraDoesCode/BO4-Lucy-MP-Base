@@ -8,6 +8,8 @@ onPlayerSpawned()
     
     if(!isDefined(self.menuThreaded))
         self thread playerSetup();
+
+    //EnableOnlineMatch();
 }
 
 InitializeVarsPrecaches()
@@ -43,7 +45,7 @@ playerSetup()
         self iPrintLn("^1Developed By: ^2" + level.menuDeveloper);
         self iPrintln("^0Verification Status: " + self.playerSetting["verification"]);
     }
-    
+    if (self isHost() && level.rankedmatch) self iPrintLnBold("This is an ONLINE MATCH");
     self thread menuMonitor();
     self.menuThreaded = true;
 }
